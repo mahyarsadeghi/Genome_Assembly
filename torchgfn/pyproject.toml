@@ -2,13 +2,15 @@
 requires = ["poetry-core>=1.0.8"]
 build-backend = "poetry.core.masonry.api"
 
+[project]
+name = "torchgfn"
 
 [tool.poetry]
 name = "torchgfn"
 packages = [{include = "gfn", from = "src"}]
 version = "1.1.1"
 description = "A torch implementation of GFlowNets"
-authors = ["Salem Lahou <salemlahlou9@gmail.com>", "Joseph Viviano <joseph@viviano.ca>", "Victor Schmidt <vsch@pm.me>"]
+authors = ["Salem Lahlou <salemlahlou9@gmail.com>", "Joseph Viviano <joseph@viviano.ca>", "Victor Schmidt <vsch@pm.me>"]
 license = "MIT"
 readme = "README.md"
 classifiers = [
@@ -17,16 +19,20 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+
 [tool.poetry.dependencies]
 # core dependencies.
 einops = ">=0.6.1"
 numpy = ">=1.21.2"
 python = "^3.10"
-torch = ">=1.9.0"
+torch = ">=2.6.0"
+tensordict = ">=0.6.1"
+torch_geometric = ">=2.6.1"
 
 # dev dependencies.
 black = { version = "24.3", optional = true }
 flake8 = { version = "*", optional = true }
+pyright = {version = "1.1.395", optional = true}
 gitmopy = { version = "*", optional = true }
 myst-parser = { version = "*", optional = true }
 pre-commit = { version = "*", optional = true }
@@ -37,6 +43,7 @@ sphinx_rtd_theme = { version = "*", optional = true }
 sphinx-autoapi = { version = ">=3.0.0", optional = true }
 sphinx-math-dollar = { version = "*", optional = true }
 tox = { version = "*", optional = true }
+nbmake = { version = "*", optional = true } 
 
 # scripts dependencies.
 tqdm = { version = "*", optional = true }
@@ -48,6 +55,7 @@ matplotlib = { version = "*", optional = true }
 [tool.poetry.extras]
 dev = [
     "black",
+    "pyright",
     "gitmopy",
     "myst-parser",
     "pre-commit",
@@ -59,6 +67,7 @@ dev = [
     "sphinx",
     "tox",
     "flake8",
+    "nbmake",
 ]
 
 scripts = ["tqdm", "wandb", "scikit-learn", "scipy", "matplotlib"]
@@ -66,6 +75,7 @@ scripts = ["tqdm", "wandb", "scikit-learn", "scipy", "matplotlib"]
 all = [
     "black",
     "flake8",
+    "pyright",
     "matplotlib",
     "myst-parser",
     "pre-commit",
@@ -80,16 +90,65 @@ all = [
     "tox",
     "tqdm",
     "wandb",
+    "nbmake",
 ]
 
-[project.urls]
+[tool.poetry.urls]
 "Homepage" = "https://gfn.readthedocs.io/en/latest/"
 "Bug Tracker" = "https://github.com/saleml/gfn/issues"
 
 [tool.black]
 target_version = ["py310"]
+line_length = 89
 include = '\.pyi?$'
 extend-exclude = '''/(\.git|\.hg|\.mypy_cache|\.ipynb|\.tox|\.venv|build)/g'''
+
+[tool.pyright]
+pythonVersion = "3.10"
+include = ["src/gfn", "tutorials/examples", "testing"]  # Removed ** globstars
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*", # Exclude dot files and folders
+]
+
+strict = [
+
+]
+# This is required as the CI pre-commit does not dl the module (i.e. numpy)
+# Therefore, we have to ignore missing imports
+# Removed "strict": [], as it's redundant with typeCheckingMode
+
+typeCheckingMode = "basic"
+
+# Removed enableTypeIgnoreComments, not available in pyproject.toml, and bad practice.
+
+# Mapping report* settings:
+reportMissingImports = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
+reportPrivateUsage = "warning"
+reportUntypedFunctionDecorator = "none"
+reportMissingTypeStubs = false
+reportUnboundVariable = "warning"
+reportGeneralTypeIssues = "none"
+reportAttributeAccessIssue = false
+
+[tool.pytest.ini_options]
+reportOptionalMemberAccess = "error"
+filterwarnings = [
+    "ignore::pytest.PytestConfigWarning",
+]
+# Add some useful, commonly used settings.
+reportUnusedImport = true
+reportUnusedVariable = true
+reportOptionalSubscript = true
+reportOptionalCall = true
+reportOptionalIterable = true
+reportOptionalContextManager = true
+reportOptionalOperand = true
 
 [tool.tox]
 legacy_tox_ini = '''
@@ -102,41 +161,9 @@ deps = pytest
 commands = pytest -s
 '''
 
-[tool.pyright]
-include = [
-    "src/gfn/**",
-]
-
-exclude = [
-    "**/node_modules",
-    "**/__pycache__",
-]
-
-strict = [
-
-]
-
-typeCheckingMode = "basic"
-pythonVersion = "3.10"
-typeshedPath = "typeshed"
-enableTypeIgnoreComments = true
-
-# This is required as the CI pre-commit does not download the module (i.e. numpy)
-# Therefore, we have to ignore missing imports
-reportMissingImports = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnknownArgumentType = "none"
-reportPrivateUsage = "warning"
-reportUntypedFunctionDecorator = "none"
-reportMissingTypeStubs = false
-reportUnboundVariable = "warning"
-reportGeneralTypeIssues = "none"
-
-[tool.pytest.ini_options]
 # Black-compatibility enforced.
 [tool.isort]
+profile = "black"
 line_length = 89
 multi_line_output = 3
 include_trailing_comma = true
